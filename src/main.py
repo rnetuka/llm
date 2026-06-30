@@ -1,0 +1,31 @@
+import torch.nn
+
+from attention import SimplifiedSelfAttention, SelfAttention
+from tokenizer import Tokenizer
+
+
+if __name__ == '__main__':
+    text = 'You journey begins with one step'
+    embedding_dimensions = 3 # 256
+
+    tokenizer = Tokenizer()
+    tokens = tokenizer.tokenize(text)
+    length = len(tokens)
+
+    embedding_layer = torch.nn.Embedding(tokenizer.vocabulary_size, embedding_dimensions)
+    token_embeddings = embedding_layer(tokens.tensor)
+
+    context_length = length
+    context_layer = torch.nn.Embedding(context_length, embedding_dimensions)
+    position_embeddings = context_layer(torch.arange(context_length))
+
+    input_embeddings = token_embeddings + position_embeddings
+
+    # Self-attention
+
+    attention_scores = input_embeddings @ input_embeddings.T
+    attention_weights = torch.softmax(attention_scores, dim=-1)
+
+    attention = SimplifiedSelfAttention()
+    context_vectors = attention.apply(input_embeddings)
+    print(context_vectors)
