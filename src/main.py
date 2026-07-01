@@ -1,6 +1,6 @@
 import torch.nn
 
-from attention import SimplifiedSelfAttention, SelfAttention
+from attention import CasualAttention
 from tokenizer import Tokenizer
 
 
@@ -23,9 +23,9 @@ if __name__ == '__main__':
 
     # Self-attention
 
-    attention_scores = input_embeddings @ input_embeddings.T
-    attention_weights = torch.softmax(attention_scores, dim=-1)
-
-    attention = SimplifiedSelfAttention()
-    context_vectors = attention.apply(input_embeddings)
-    print(context_vectors)
+    torch.manual_seed(123)
+    batch = torch.stack((input_embeddings, input_embeddings), dim=0)
+    context_length = batch.shape[1]
+    attention = CasualAttention(d_in, d_out, context_length, dropout_rate=0.0)
+    context_vectors = attention(input_embeddings)
+    print(context_vectors.shape)
