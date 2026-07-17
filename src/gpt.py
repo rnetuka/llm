@@ -43,3 +43,5 @@ class GptModel(nn.Module):
         total_size_bytes = self.number_of_parameters * 4
         total_size_mb = total_size_bytes / (1024 * 1024)
         return f'{total_size_mb:.2f} MB'
+
+

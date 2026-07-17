@@ -21,6 +21,9 @@ class Tokenizer:
         tokens = [self.__decode(token_id) for token_id in token_ids]
         return Tokens(tokens, token_ids)
 
+    def decode(self, tokens: list[int]) -> str:
+        return self.encoding.decode(tokens)
+
 
 class Tokens:
 
