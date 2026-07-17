@@ -1,12 +1,14 @@
-from torch import softmax, Tensor
-from torch.nn import Module
+import torch
+import torch.nn as nn
+
+from torch import Tensor
 
 
-class SimplifiedSelfAttention(Module):
+class SimplifiedSelfAttention(nn.Module):
 
-    def forward(self, input: Tensor) -> Tensor:
-        attention_scores = input @ input.T
-        attention_weights = softmax(attention_scores, dim=-1)
+    def forward(self, x: Tensor) -> Tensor:
+        attention_scores = x @ x.T
+        attention_weights = torch.softmax(attention_scores, dim=-1)
 
-        context_vector = attention_weights @ input
+        context_vector = attention_weights @ x
         return context_vector

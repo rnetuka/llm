@@ -1,31 +1,27 @@
 import torch.nn
 
-from attention import CasualAttention
+from gpt import GptModel
 from tokenizer import Tokenizer
 
 
 if __name__ == '__main__':
-    text = 'You journey begins with one step'
-    embedding_dimensions = 3 # 256
+    text1 = 'Every effort moves you'
+    text2 = 'Every day holds a'
 
     tokenizer = Tokenizer()
-    tokens = tokenizer.tokenize(text)
-    length = len(tokens)
 
-    embedding_layer = torch.nn.Embedding(tokenizer.vocabulary_size, embedding_dimensions)
-    token_embeddings = embedding_layer(tokens.tensor)
+    batch = []
+    batch.append(tokenizer.tokenize(text1).tensor)
+    batch.append(tokenizer.tokenize(text2).tensor)
+    batch = torch.stack(batch, dim=0)
 
-    context_length = length
-    context_layer = torch.nn.Embedding(context_length, embedding_dimensions)
-    position_embeddings = context_layer(torch.arange(context_length))
+    model = GptModel()
 
-    input_embeddings = token_embeddings + position_embeddings
+    print('GPT-2 small+')
+    print(f'Total number of parameters: {model.number_of_parameters:_}'.replace('_', ' '))
+    print(f'Total size of the model: {model.model_size}')
 
-    # Self-attention
+    logits = model(batch)
 
-    torch.manual_seed(123)
-    batch = torch.stack((input_embeddings, input_embeddings), dim=0)
-    context_length = batch.shape[1]
-    attention = CasualAttention(d_in, d_out, context_length, dropout_rate=0.0)
-    context_vectors = attention(input_embeddings)
-    print(context_vectors.shape)
+    print(f'Output shape: {logits.shape}')
+    print(logits)
