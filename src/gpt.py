@@ -12,6 +12,14 @@ class GptModel(nn.Module):
     # token embedding layer transforming every word in the vocabulary into N dimensional vector
     tok_emb: nn.Embedding
 
+    # temperature parameter for token selection process
+    # value > 0 (default is 1)
+    # - values between 0 and 1 results in sharper probability distribution, making the model to select the most likely
+    #   token almost every time
+    # - values greater than 1 results in more uniform probability distribution, making the model select tokens more
+    #   variably, but with a risk of producing nonsense output
+    temperature: float | int
+
     def __init__(self):
         super().__init__()
         self.tok_emb = nn.Embedding(VOCABULARY_SIZE, EMBEDDING_DIMENSIONS)
@@ -22,6 +30,7 @@ class GptModel(nn.Module):
         )
         self.final_norm = LayerNormalization()
         self.output_layer = nn.Linear(EMBEDDING_DIMENSIONS, VOCABULARY_SIZE, bias=False)
+        self.temperature = 1
 
     def forward(self, in_idx: Tensor) -> Tensor:
         batch_size, seq_len = in_idx.shape
@@ -44,4 +53,19 @@ class GptModel(nn.Module):
         total_size_mb = total_size_bytes / (1024 * 1024)
         return f'{total_size_mb:.2f} MB'
 
+    def generate_text(self, context: Tensor, max_new_tokens: int, context_size: int = CONTEXT_LENGTH) -> Tensor:
+        for _ in range(max_new_tokens):
+            cropped_context = context[:, -context_size:]
+            with torch.no_grad():
+                logits = self(cropped_context)
 
+            logits = logits[:, -1, :]          # last vector, corresponding to the next token
+            logits = logits / self.temperature  # scale with temperature
+            probabilities = torch.softmax(logits, dim=-1)  # converts vector into probability distribution
+
+            # select a token with large probability score (choose among largest values)
+            next_token = torch.multinomial(probabilities, num_samples=1)
+
+            context = torch.cat((context, next_token), dim=1) # appends sampled index to the running sequence
+
+        return context
