@@ -1,3 +1,13 @@
 # pyproject.toml
+
+[project]
+name = "My GPT"
+version = "0.1.0"
+dependencies = [
+    "torch>=2.0.0",
+    "tiktoken>=0.5.0",
+    "numpy>=1.24.0",
+]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
