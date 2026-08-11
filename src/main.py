@@ -1,59 +1,52 @@
+import os
 import torch.nn
 
-from training.trainer import ModelTrainer
-from vocabulary import Vocabulary
-from config import CONTEXT_LENGTH
 from gpt import GptModel
+from pretraining import openai
+from pretraining.openai import GPT_2_SMALL
 from tokenizer import Tokenizer
-from training.dataloader import dataloaders
+from training.dataloader import create_dataloader
+from training.evaluator import ModelEvaluator
+from vocabulary import Vocabulary
 
 
 if __name__ == '__main__':
-    text1 = 'Every effort moves you'
-    text2 = 'Every day holds a'
-
     tokenizer = Tokenizer()
     vocabulary = Vocabulary()
 
     model = GptModel()
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model.to(device)
+    model.temperature = 1.5
+    model.top_k = 50
+    model.to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
     model.eval()
 
-    print('GPT-2 small+')
-    print(f'Total number of parameters: {model.number_of_parameters:_}'.replace('_', ' '))
-    print(f'Total size of the model: {model.model_size}')
+    print('GPT-2 small (custom)')
+    print(f'Number of parameters: {model.number_of_parameters:_}'.replace('_', ' '))
+    print(f'Model size: {model.model_size}')
 
-    start_context = 'Hello, I am'
-    tokens = tokenizer.tokenize(start_context)
+    evaluator = ModelEvaluator(model)
+    validation_data = create_dataloader('../resources/texts/the-verdict.txt')
 
-    output = model.generate_text(tokens, max_new_tokens=6, context_size=CONTEXT_LENGTH)
-    print(f'Output: {output}')
-    print(f'Output length: {len(output[0])}')
+    print(f'Vanilla model validation Loss: {evaluator.evaluate_model(validation_data):.3f}')
 
-    decoded_text = vocabulary.decode(output.squeeze(0).tolist())
-    print(f'Decoded text: {decoded_text}')
+    # Load OpenAI weights instead of training
+    if os.path.exists(model.state_file):
+       print(f'Restoring model state from file: {model.state_file}')
+       model.load()
+    else:
+        if not os.path.exists(f'../resources/model-weights/{GPT_2_SMALL}'):
+            openai.download_weights(GPT_2_SMALL)
 
-    with open('../resources/texts/the-verdict.txt') as file:
-        text_data = file.read()
+        settings, params = openai.load_weights(GPT_2_SMALL)
+        openai.assign_weights(model, params)
+        model.save()
 
-    print(f'Training text characters: {len(text_data)}')
-    print(f'Training text tokens: {tokenizer.tokenize(text_data).shape[1]}')
+    print(f'Trained model validation Loss: {evaluator.evaluate_model(validation_data):.3f}')
 
-    trainer = ModelTrainer(model)
-    train_loader, validation_loader = dataloaders()
+    tokens = tokenizer.tokenize('Every effort moves you')
+    output = model.generate_text(tokens, max_new_tokens=30)
+    decoded_text = vocabulary.decode(output.tolist())
 
-    print('Before training')
-    print(f'Train Loss: {trainer.evaluate_model(train_loader):.3f}')
-    print(f'Validation Loss: {trainer.evaluate_model(validation_loader):.3f}')
-
-    print('Training the model (takes around 5 minutes)')
-    trainer.train(train_loader, 10)
-
-    print('After training')
-    print(f'Train Loss: {trainer.evaluate_model(train_loader):.3f}')
-    print(f'Validation Loss: {trainer.evaluate_model(validation_loader):.3f}')
-
-    output = model.generate_text(tokens, max_new_tokens=6, context_size=CONTEXT_LENGTH)
-    decoded_text = vocabulary.decode(output.squeeze(0).tolist())
-    print(f'Output: {decoded_text}')
+    print()
+    print('Output:')
+    print(decoded_text)

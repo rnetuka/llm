@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.nn as nn
 
@@ -58,12 +60,16 @@ class GptModel(nn.Module):
         total_size_mb = total_size_bytes / (1024 * 1024)
         return f'{total_size_mb:.2f} MB'
 
+    @property
+    def state_file(self):
+        return os.path.join('..', 'resources', 'gpt2-small.pth')
+
     def apply_top_k(self, logits: Tensor) -> Tensor:
         if self.top_k is not None:
-            logits, _ = torch.topk(logits, k=self.top_k)
-            min_value = logits[:, -1]
-            logits = torch.where(
-                logits < min_value,
+            top_logits, _ = torch.topk(logits, self.top_k)
+            min_val = top_logits[:, -1]
+            return torch.where(
+                logits < min_val,
                 torch.tensor(float('-inf')).to(logits.device),
                 logits
             )
@@ -88,4 +94,11 @@ class GptModel(nn.Module):
 
             context = torch.cat((context, next_token), dim=1) # appends sampled index to the running sequence
 
-        return context
+        return context.squeeze(0)
+
+    def save(self):
+        torch.save(self.state_dict(), self.state_file)
+
+    def load(self):
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.load_state_dict(torch.load(self.state_file, map_location=device))

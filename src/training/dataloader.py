@@ -1,3 +1,4 @@
+from os import PathLike
 from torch.utils.data import DataLoader
 from training.dataset import TrainingDataset
 
@@ -26,3 +27,9 @@ def dataloaders(split_ratio: float = 0.9, batch_size: int = 2, context_length: i
             DataLoader(training_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=0),
             DataLoader(validation_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=0)
         )
+
+def create_dataloader(path: str | PathLike[str], batch_size: int = 2, context_length: int = 256, stride: int = 256) -> DataLoader:
+    with open(path) as file:
+        text = file.read()
+        validation_dataset = TrainingDataset(text, context_length, stride)
+        return DataLoader(validation_dataset, batch_size=batch_size, shuffle=True, drop_last=True, num_workers=0)

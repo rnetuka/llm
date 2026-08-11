@@ -21,7 +21,7 @@ GPT_2_SMALL = GptConfig(
     attention_heads = 12,
     n_layers = 12,
     drop_rate = 0.1,
-    qkv_bias = False
+    qkv_bias = True
 )
 
 GPT_2_MEDIUM = GptConfig(
@@ -31,7 +31,7 @@ GPT_2_MEDIUM = GptConfig(
     attention_heads=16,
     n_layers=24,
     drop_rate=0.1,
-    qkv_bias=False
+    qkv_bias=True
 )
 
 GPT_2_LARGE = GptConfig(
@@ -41,7 +41,7 @@ GPT_2_LARGE = GptConfig(
     attention_heads=20,
     n_layers=36,
     drop_rate=0.1,
-    qkv_bias=False
+    qkv_bias=True
 )
 
 GPT_2_XL = GptConfig(
@@ -51,7 +51,7 @@ GPT_2_XL = GptConfig(
     attention_heads=25,
     n_layers=48,
     drop_rate=0.1,
-    qkv_bias=False
+    qkv_bias=True
 )
 
 VOCABULARY_SIZE = 50_257
@@ -60,4 +60,4 @@ EMBEDDING_DIMENSIONS = 768
 ATTENTION_HEADS = 12
 N_LAYERS = 12
 DROP_RATE = 0.1
-QKV_BIAS = False
+QKV_BIAS = True
