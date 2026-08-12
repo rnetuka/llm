@@ -2,12 +2,11 @@ import json
 import numpy
 import os
 import requests
-import torch.nn
+import torch
+import torch.nn as nn
 
 from requests.exceptions import RequestException
 from tqdm import tqdm
-
-from gpt import GptModel
 
 
 GPT_2_SMALL = '124M'
@@ -109,9 +108,9 @@ def assign(left, right):
     if left.shape != right.shape:
         raise ValueError(f'Shape mismatch: {left.shape} != {right.shape}')
 
-    return torch.nn.Parameter(torch.tensor(right))
+    return nn.Parameter(torch.tensor(right))
 
-def assign_weights(gpt: GptModel, params):
+def assign_weights(gpt, params):
     # Embeddings
     gpt.pos_emb.weight = assign(gpt.pos_emb.weight, params['wpe'])
     gpt.tok_emb.weight = assign(gpt.tok_emb.weight, params['wte'])
@@ -174,3 +173,15 @@ def assign_weights(gpt: GptModel, params):
     gpt.final_norm.scale = assign(gpt.final_norm.scale, params['g'])
     gpt.final_norm.shift = assign(gpt.final_norm.shift, params['b'])
     gpt.output_layer.weight = assign(gpt.output_layer.weight, params['wte'])
+
+
+def pretrain(model: nn.Module):
+    if model.state_file.exists():
+        model.load()
+    else:
+        if not os.path.exists(f'../resources/model-weights/{GPT_2_SMALL}'):
+            download_weights(GPT_2_SMALL)
+
+        settings, params = load_weights(GPT_2_SMALL)
+        assign_weights(model, params)
+        model.save()

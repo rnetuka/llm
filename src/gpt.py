@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import torch
 import torch.nn as nn
@@ -6,6 +7,8 @@ import torch.nn as nn
 from config import EMBEDDING_DIMENSIONS, DROP_RATE, VOCABULARY_SIZE, CONTEXT_LENGTH, N_LAYERS
 from normalization import LayerNormalization
 from torch import Tensor
+
+from pretraining import openai
 from transformer import TransformerBlock
 
 
@@ -39,6 +42,16 @@ class GptModel(nn.Module):
         self.temperature = 1
         self.top_k = None
 
+    @staticmethod
+    def pretrained() -> GptModel:
+        model = GptModel()
+        model.temperature = 1.5
+        model.top_k = 50
+        model.to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+        model.eval()
+        openai.pretrain(model)
+        return model
+
     def forward(self, in_idx: Tensor) -> Tensor:
         batch_size, seq_len = in_idx.shape
         tok_embeds = self.tok_emb(in_idx)
@@ -61,8 +74,8 @@ class GptModel(nn.Module):
         return f'{total_size_mb:.2f} MB'
 
     @property
-    def state_file(self):
-        return os.path.join('..', 'resources', 'gpt2-small.pth')
+    def state_file(self) -> Path:
+        return Path('..') / 'resources' / 'gpt2-small.pth'
 
     def apply_top_k(self, logits: Tensor) -> Tensor:
         if self.top_k is not None:

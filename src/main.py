@@ -30,16 +30,7 @@ if __name__ == '__main__':
     print(f'Vanilla model validation Loss: {evaluator.evaluate_model(validation_data):.3f}')
 
     # Load OpenAI weights instead of training
-    if os.path.exists(model.state_file):
-       print(f'Restoring model state from file: {model.state_file}')
-       model.load()
-    else:
-        if not os.path.exists(f'../resources/model-weights/{GPT_2_SMALL}'):
-            openai.download_weights(GPT_2_SMALL)
-
-        settings, params = openai.load_weights(GPT_2_SMALL)
-        openai.assign_weights(model, params)
-        model.save()
+    openai.pretrain(model)
 
     print(f'Trained model validation Loss: {evaluator.evaluate_model(validation_data):.3f}')
 
