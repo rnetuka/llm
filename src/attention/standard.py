@@ -1,17 +1,19 @@
 import torch
 import torch.nn as nn
 
-from config import EMBEDDING_DIMENSIONS, QKV_BIAS
+from config import GptConfig
 from torch import  Tensor
 
 
 class SelfAttention(nn.Module):
 
-    def __init__(self,
-                 d_in: int = EMBEDDING_DIMENSIONS,
-                 d_out: int = EMBEDDING_DIMENSIONS,
-                 qkv_bias: bool = QKV_BIAS):
+    def __init__(self, config: GptConfig):
         super().__init__()
+
+        d_in = config.embedding_dimensions
+        d_out = config.embedding_dimensions
+        qkv_bias = config.qkv_bias
+
         self.W_query = nn.Linear(d_in, d_out, qkv_bias)
         self.W_key = nn.Linear(d_in, d_out, qkv_bias)
         self.W_value = nn.Linear(d_in, d_out, qkv_bias)

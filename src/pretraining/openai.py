@@ -8,6 +8,7 @@ import torch.nn as nn
 from requests.exceptions import RequestException
 from tqdm import tqdm
 
+from config import MODEL_SIZE_SMALL, MODEL_SIZE_MEDIUM, MODEL_SIZE_LARGE, MODEL_SIZE_XL
 
 GPT_2_SMALL = '124M'
 GPT_2_MEDIUM = '355M'
@@ -179,9 +180,17 @@ def pretrain(model: nn.Module):
     if model.state_file.exists():
         model.load()
     else:
-        if not os.path.exists(f'../resources/model-weights/{GPT_2_SMALL}'):
-            download_weights(GPT_2_SMALL)
+        model_mapping = {
+            MODEL_SIZE_SMALL: GPT_2_SMALL,
+            MODEL_SIZE_MEDIUM: GPT_2_MEDIUM,
+            MODEL_SIZE_LARGE: GPT_2_LARGE,
+            MODEL_SIZE_XL: GPT_2_XL,
+        }
+        model_size = model_mapping[model.config.model_size]
 
-        settings, params = load_weights(GPT_2_SMALL)
+        if not os.path.exists(f'../resources/model-weights/{model_size}'):
+            download_weights(model_size)
+
+        settings, params = load_weights(model_size)
         assign_weights(model, params)
         model.save()

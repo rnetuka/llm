@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from config import EMBEDDING_DIMENSIONS
+from config import GptConfig
 from torch import Tensor
 
 
@@ -14,11 +14,11 @@ class LayerNormalization(nn.Module):
     # both trainable parameters are adjusted during training if it is determined that doing so would improve the
     # model's performance on its training task
 
-    def __init__(self):
+    def __init__(self, config: GptConfig):
         super().__init__()
         self.eps = 1e-5
-        self.scale = nn.Parameter(torch.ones(EMBEDDING_DIMENSIONS))
-        self.shift = nn.Parameter(torch.zeros(EMBEDDING_DIMENSIONS))
+        self.scale = nn.Parameter(torch.ones(config.embedding_dimensions))
+        self.shift = nn.Parameter(torch.zeros(config.embedding_dimensions))
 
     def forward(self, x: Tensor) -> Tensor:
         mean = x.mean(dim=-1, keepdim=True)     # mean of x1, x2, ... xN = (x1 + x2 + ... + xN) / N

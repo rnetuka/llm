@@ -1,31 +1,34 @@
-from pathlib import Path
-
 import torch
 import torch.nn as nn
 
-from config import EMBEDDING_DIMENSIONS, CONTEXT_LENGTH
+from config import CONTEXT_LENGTH, GPT_2_SMALL, GptConfig
 from gpt import GptModel
+from pathlib import Path
 from tokenizer import Tokenizer
 from torch import Tensor
 
 
 class SpamClassifier(nn.Module):
 
-    def __init__(self):
+    def __init__(self, config: GptConfig = GPT_2_SMALL):
         super().__init__()
         self.tokenizer = Tokenizer()
-        self.gpt = GptModel.pretrained()
+        self.gpt = GptModel.pretrained(config)
 
         for param in self.gpt.parameters():  # disable learning for the whole model
             param.requires_grad = False
 
-        self.gpt.output_layer = nn.Linear(EMBEDDING_DIMENSIONS, 2)  # output layer now maps to two classes
+        self.gpt.output_layer = nn.Linear(config.embedding_dimensions, 2)  # output layer now maps to two classes
 
         for param in self.gpt.trf_blocks[-1].parameters():  # re-enable learning for last transformer block
             param.requires_grad = True
 
         for param in self.gpt.final_norm.parameters():  # re-enable learning for normalization layer
             param.requires_grad = True
+
+    #@classmethod
+    #def pretrained(cls, config: GptConfig):
+
 
     @property
     def number_of_parameters(self) -> int:

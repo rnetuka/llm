@@ -1,6 +1,6 @@
-from finetuning.classification.spam.evaluator import SpamClassifierEvaluator
+from finetuning.classification.spam.evaluation import SpamClassifierEvaluator
 from finetuning.classification.spam.model import SpamClassifier
-from finetuning.classification.spam.trainer import SmsSpamTrainer
+from finetuning.classification.spam.training import SmsSpamTrainer
 
 
 if __name__ == '__main__':

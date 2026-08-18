@@ -1,32 +1,33 @@
 import torch
 import torch.nn as nn
 
-from config import EMBEDDING_DIMENSIONS, CONTEXT_LENGTH, DROP_RATE, QKV_BIAS
+from config import CONTEXT_LENGTH, GptConfig
 from torch import Tensor
 
 
 class CasualAttention(nn.Module):
 
-    def __init__(self,
-                 d_in: int = EMBEDDING_DIMENSIONS,
-                 d_out: int = EMBEDDING_DIMENSIONS,
-                 context_length: int = CONTEXT_LENGTH,
-                 dropout_rate: float = DROP_RATE,
-                 qkv_bias: bool = QKV_BIAS):
+    def __init__(self, config: GptConfig):
         super().__init__()
+
+        d_in = config.embedding_dimensions
+        d_out = config.embedding_dimensions
+        drop_rate = config.drop_rate
+        qkv_bias = config.qkv_bias
+
         self.d_out = d_out
         self.W_query = nn.Linear(d_in, d_out, qkv_bias)
         self.W_key = nn.Linear(d_in, d_out, qkv_bias)
         self.W_value = nn.Linear(d_in, d_out, qkv_bias)
-        self.dropout = nn.Dropout(dropout_rate)
-        self.register_buffer('mask', torch.triu(torch.ones(context_length, context_length), diagonal=1))
+        self.dropout = nn.Dropout(drop_rate)
+        self.register_buffer('mask', torch.triu(torch.ones(CONTEXT_LENGTH, CONTEXT_LENGTH), diagonal=1))
 
-    def forward(self, input: Tensor) -> Tensor:
-        b, num_tokens, d_in = input.shape
+    def forward(self, x: Tensor) -> Tensor:
+        b, num_tokens, d_in = x.shape
 
-        queries = self.W_query(input)
-        keys = self.W_key(input)
-        values = self.W_value(input)
+        queries = self.W_query(x)
+        keys = self.W_key(x)
+        values = self.W_value(x)
 
         attention_scores = queries @ keys.transpose(1, 2)
         attention_scores.masked_fill_(self.mask.bool()[:num_tokens, :num_tokens], -torch.inf)

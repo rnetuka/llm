@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib import request
 from zipfile import ZipFile
 
-from .evaluator import SpamClassifierEvaluator
+from .evaluation import SpamClassifierEvaluator
 from .model import SpamClassifier
 from torch.optim import AdamW
 

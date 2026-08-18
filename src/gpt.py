@@ -1,14 +1,13 @@
-import os
-from pathlib import Path
+from __future__ import annotations
 
 import torch
 import torch.nn as nn
 
-from config import EMBEDDING_DIMENSIONS, DROP_RATE, VOCABULARY_SIZE, CONTEXT_LENGTH, N_LAYERS
+from config import GptConfig, VOCABULARY_SIZE, GPT_2_SMALL, CONTEXT_LENGTH
 from normalization import LayerNormalization
-from torch import Tensor
-
+from pathlib import Path
 from pretraining import openai
+from torch import Tensor
 from transformer import TransformerBlock
 
 
@@ -29,22 +28,23 @@ class GptModel(nn.Module):
     # if provided, select top K probability values and choose only among them
     top_k: int | None
 
-    def __init__(self):
+    def __init__(self, config: GptConfig):
         super().__init__()
-        self.tok_emb = nn.Embedding(VOCABULARY_SIZE, EMBEDDING_DIMENSIONS)
-        self.pos_emb = nn.Embedding(CONTEXT_LENGTH, EMBEDDING_DIMENSIONS)
-        self.dropout = nn.Dropout(DROP_RATE)
+        self.tok_emb = nn.Embedding(VOCABULARY_SIZE, config.embedding_dimensions)
+        self.pos_emb = nn.Embedding(CONTEXT_LENGTH, config.embedding_dimensions)
+        self.dropout = nn.Dropout(config.drop_rate)
         self.trf_blocks = nn.Sequential(
-            *[TransformerBlock() for _ in range(N_LAYERS)]
+            *[TransformerBlock(config) for _ in range(config.n_layers)]
         )
-        self.final_norm = LayerNormalization()
-        self.output_layer = nn.Linear(EMBEDDING_DIMENSIONS, VOCABULARY_SIZE, bias=False)
+        self.final_norm = LayerNormalization(config)
+        self.output_layer = nn.Linear(config.embedding_dimensions, VOCABULARY_SIZE, bias=False)
+        self.config = config
         self.temperature = 1
         self.top_k = None
 
-    @staticmethod
-    def pretrained() -> GptModel:
-        model = GptModel()
+    @classmethod
+    def pretrained(cls, config: GptConfig) -> GptModel:
+        model = cls(config)
         model.temperature = 1.5
         model.top_k = 50
         model.to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
@@ -52,16 +52,20 @@ class GptModel(nn.Module):
         openai.pretrain(model)
         return model
 
-    def forward(self, in_idx: Tensor) -> Tensor:
-        batch_size, seq_len = in_idx.shape
-        tok_embeds = self.tok_emb(in_idx)
-        pos_embeds = self.pos_emb(torch.arange(seq_len, device=in_idx.device))  # device is CPU/GPU based on the input data
+    def forward(self, input: Tensor) -> Tensor:
+        batch_size, sequence_length = input.shape
+        tok_embeds = self.tok_emb(input)
+        pos_embeds = self.pos_emb(torch.arange(sequence_length, device=input.device))  # device is CPU/GPU based on the input data
         x = tok_embeds + pos_embeds
         x = self.dropout(x)
         x = self.trf_blocks(x)
         x = self.final_norm(x)
         logits = self.output_layer(x)
         return logits
+
+    @property
+    def name(self) -> str:
+        return self.config.model_name
 
     @property
     def number_of_parameters(self) -> int:
@@ -75,7 +79,7 @@ class GptModel(nn.Module):
 
     @property
     def state_file(self) -> Path:
-        return Path('..') / 'resources' / 'gpt2-small.pth'
+        return Path('..') / 'resources' / f'{self.config.model_size}.pth'
 
     def apply_top_k(self, logits: Tensor) -> Tensor:
         if self.top_k is not None:

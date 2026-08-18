@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from config import EMBEDDING_DIMENSIONS, CONTEXT_LENGTH, DROP_RATE, ATTENTION_HEADS, QKV_BIAS
+from config import CONTEXT_LENGTH, GptConfig
 from torch import Tensor
 
 
@@ -16,14 +16,14 @@ class MultiHeadAttention(nn.Module):
     out_proj: nn.Linear
     dropout: nn.Dropout
 
-    def __init__(self,
-                 d_in: int = EMBEDDING_DIMENSIONS,
-                 d_out: int = EMBEDDING_DIMENSIONS,
-                 context_length: int = CONTEXT_LENGTH,
-                 droupout: float = DROP_RATE,
-                 num_heads: int = ATTENTION_HEADS,
-                 qkv_bias: bool = QKV_BIAS):
+    def __init__(self, config: GptConfig):
         super().__init__()
+
+        d_in = config.embedding_dimensions
+        d_out = config.embedding_dimensions
+        drop_rate = config.drop_rate
+        num_heads = config.attention_heads
+        qkv_bias = config.qkv_bias
 
         if d_out % num_heads != 0:
             raise ValueError('d_out must be divisible by num_heads')
@@ -35,8 +35,8 @@ class MultiHeadAttention(nn.Module):
         self.W_key = nn.Linear(d_in, d_out, qkv_bias)
         self.W_value = nn.Linear(d_in, d_out, qkv_bias)
         self.out_proj = nn.Linear(d_out, d_out)
-        self.dropout = nn.Dropout(droupout)
-        self.register_buffer('mask', torch.triu(torch.ones(context_length, context_length), diagonal=1))
+        self.dropout = nn.Dropout(drop_rate)
+        self.register_buffer('mask', torch.triu(torch.ones(CONTEXT_LENGTH, CONTEXT_LENGTH), diagonal=1))
 
     def forward(self, x: Tensor) -> Tensor:
         b, num_tokens, d_in = x.shape
