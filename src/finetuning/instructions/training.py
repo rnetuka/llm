@@ -54,7 +54,7 @@ class InstructionTrainer:
     def train(self, model: GptModel, n_epochs: int = 2):
         start_time = time.time()
         optimizer = AdamW(model.parameters(), weight_decay=0.1)
-        loss_calculator = LossCalculator()
+        loss_calculator = LossCalculator(model)
 
         training_losses = []
         validation_losses = []
