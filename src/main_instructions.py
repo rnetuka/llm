@@ -1,7 +1,7 @@
 # Fine-tuned GPT-2 model for processing instructions
 import types
 
-from config import GPT_2_SMALL
+from config import GPT_2_MEDIUM
 from copy import copy
 from encoding import Tokenizer, Vocabulary
 from finetuning.instructions.format import AlpacaFormatter
@@ -15,6 +15,7 @@ vocabulary = Vocabulary()
 formatter = AlpacaFormatter()
 
 
+# method attached to the GptModel for convenient processing of instructions
 def process(model: GptModel, instruction: str, input: str | None = None) -> str:
     input_text = formatter.format_instructions(instruction,input)
     output = model.generate_text(tokenizer.tokenize(input_text), max_new_tokens=35)
@@ -25,8 +26,29 @@ def process(model: GptModel, instruction: str, input: str | None = None) -> str:
     return response
 
 
+def test_model(model: GptModel, instruction: str, correct_response: str, input: str | None = None, test_suffix: str | int = ''):
+    test_name = f'Test {test_suffix}'.strip()
+    print(f'{test_name}:')
+    print('### Instruction:')
+    print(instruction)
+    print()
+    if input:
+        print('### Input:')
+        print(input)
+        print()
+    print('### Correct response:')
+    print(correct_response)
+    print()
+    response: str = model.process(instruction, input)
+    print('### Model response:')
+    if '\n' in response:
+        response = '\n'.join('> ' + line for line in response.splitlines())
+    print(response)
+    print()
+
+
 if __name__ == '__main__':
-    config = copy(GPT_2_SMALL)
+    config = copy(GPT_2_MEDIUM)
 
     model = GptModel.pretrained(config)
     model.process = types.MethodType(process, model)
@@ -39,72 +61,46 @@ if __name__ == '__main__':
 
     trainer = InstructionTrainer()
 
-    print(f'Validation loss before fine-tuning: {data_loss(model, trainer.test_data)}')
+    print(f'Loss before fine-tuning: {data_loss(model, trainer.test_data):.3f}')
     print()
 
-    print('Test (before fine-tuning):')
-    instruction = 'Convert the active sentence to passive'
-    input = '"The chef cooks meal every day"'
-    print('### Instruction:')
-    print(instruction)
-    print()
-    print('### Input:')
-    print(input)
-    print()
-    print('### Correct response:')
-    print('The meal is cooked by the chef every day')
-    print()
-    response = model.process(instruction, input)
-    print('### Model response:')
-    print(response)
-    print()
+    test_model(model,
+        test_suffix='(before fine-tuning)',
+        instruction='Convert the active sentence to passive',
+        input='"The chef cooks meal every day".',
+        correct_response='The meal is cooked by the chef every day.'
+    )
 
     if model.state_file.exists():
         print('Model loaded from state file')
         model.load()
+        print()
     else:
         print('Training model, please wait...')
         trainer.train(model)
         model.save()
+        print()
 
-    print()
     print(f'Validation loss after fine-tuning: {data_loss(model, trainer.test_data)}')
+    print()
 
-    print('Test 1')
-
-    input_text = formatter.format_instructions(
-        'Rewrite the sentence using a simile',
-        'The car is very fast'
+    test_model(model,
+        test_suffix=1,
+        instruction='Rewrite the sentence using a simile',
+        input='The car is very fast',
+        correct_response='The car is fast as lightning'
     )
-    print(input_text)
-    print('Correct response:')
-    print('  The car is fast as lightning')
-    output = model.generate_text(tokenizer.tokenize(input_text), max_new_tokens=35)
-    output = vocabulary.decode(output.tolist())
-    response = output[len(input_text):].replace('### Response', '').strip()
-    print('Model response:')
-    print(f'  {response}')
+    print()
 
-    print('Test 2')
+    test_model(model,
+        test_suffix=2,
+        instruction='Convert 125 kilometers to meters',
+        correct_response='125 kilometers is 125 000 meters'
+    )
+    print()
 
-    input_text = formatter.format_instructions('What type of cloud is typically associated with thunderstorms?')
-    print(input_text)
-    print('Correct response:')
-    print('  The type of cloud typically associated with thunderstorms is cumulonimbus')
-    output = model.generate_text(tokenizer.tokenize(input_text), max_new_tokens=35)
-    output = vocabulary.decode(output.tolist())
-    response = output[len(input_text):].replace('### Response', '').strip()
-    print('Model response:')
-    print(f'  {response}')
-
-    print('Test 3')
-
-    input_text = formatter.format_instructions('Name the author of "Pride and Prejudice".')
-    print(input_text)
-    print('Correct response:')
-    print('  Jane Austen')
-    output = model.generate_text(tokenizer.tokenize(input_text), max_new_tokens=35)
-    output = vocabulary.decode(output.tolist())
-    response = output[len(input_text):].replace('### Response', '').strip()
-    print('Model response:')
-    print(f'  {response}')
+    test_model(model,
+        test_suffix=3,
+        instruction='Generate a short sentence using the word "miraculous"',
+        correct_response='Against all odds, her recovery was nothing short of miraculous.'
+    )

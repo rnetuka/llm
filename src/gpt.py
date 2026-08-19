@@ -3,7 +3,7 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
-from config import GptConfig, VOCABULARY_SIZE, GPT_2_SMALL, CONTEXT_LENGTH
+from config import device, CONTEXT_LENGTH, GptConfig, VOCABULARY_SIZE
 from normalization import LayerNormalization
 from pathlib import Path
 from pretraining import openai
@@ -47,7 +47,7 @@ class GptModel(nn.Module):
         model = cls(config)
         model.temperature = 1.5
         model.top_k = 50
-        model.to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+        model.to(device)
         model.eval()
         openai.pretrain(model)
         return model
@@ -55,7 +55,7 @@ class GptModel(nn.Module):
     def forward(self, input: Tensor) -> Tensor:
         batch_size, sequence_length = input.shape
         tok_embeds = self.tok_emb(input)
-        pos_embeds = self.pos_emb(torch.arange(sequence_length, device=input.device))  # device is CPU/GPU based on the input data
+        pos_embeds = self.pos_emb(torch.arange(sequence_length, device=device))
         x = tok_embeds + pos_embeds
         x = self.dropout(x)
         x = self.trf_blocks(x)
@@ -66,6 +66,10 @@ class GptModel(nn.Module):
     @property
     def name(self) -> str:
         return self.config.model_name
+
+    @property
+    def filename(self) -> str:
+        return self.name.lower().replace('-', '', count=1).replace(' ', '-')
 
     @property
     def number_of_parameters(self) -> int:
@@ -79,9 +83,9 @@ class GptModel(nn.Module):
 
     @property
     def state_file(self) -> Path:
-        return Path('..') / 'resources' / f'{self.config.model_size}.pth'
+        return Path('..') / 'resources' / f'{self.filename}.pth'
 
-    def apply_top_k(self, logits: Tensor) -> Tensor:
+    def pick_top_k(self, logits: Tensor) -> Tensor:
         if self.top_k is not None:
             top_logits, _ = torch.topk(logits, self.top_k)
             min_val = top_logits[:, -1]
@@ -92,9 +96,6 @@ class GptModel(nn.Module):
             )
         return logits
 
-    def apply_temperature(self, logits: Tensor) -> Tensor:
-        return logits / self.temperature
-
     def generate_text(self, context: Tensor, max_new_tokens: int) -> Tensor:
         for _ in range(max_new_tokens):
             cropped_context = context[:, -CONTEXT_LENGTH:]
@@ -102,8 +103,8 @@ class GptModel(nn.Module):
                 logits = self(cropped_context)
 
             logits = logits[:, -1, :]          # last vector, corresponding to the next token
-            logits = self.apply_top_k(logits)
-            logits = self.apply_temperature(logits)  # scale with temperature
+            logits = self.pick_top_k(logits)
+            logits = logits / self.temperature  # scale with temperature
             probabilities = torch.softmax(logits, dim=-1)  # converts vector into probability distribution
 
             # select a token with large probability score (choose among largest values)
@@ -117,5 +118,4 @@ class GptModel(nn.Module):
         torch.save(self.state_dict(), self.state_file)
 
     def load(self):
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.load_state_dict(torch.load(self.state_file, map_location=device))
