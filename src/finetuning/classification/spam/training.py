@@ -1,21 +1,21 @@
 import pandas
 
+from .data import download_sms_spam_data, resource_directory
 from .dataloader import create_dataloader
+from .evaluation import SpamClassifierEvaluator
+from .loss import SpamLossCalculator
+from .model import SpamClassifier
 from pandas import DataFrame
 from pandas.io.parsers import TextFileReader
-from pathlib import Path
-from urllib import request
-from zipfile import ZipFile
-
-from .evaluation import SpamClassifierEvaluator
-from .model import SpamClassifier
 from torch.optim import AdamW
-
-
-resource_directory = Path('..') / 'resources' / 'finetuning'
+from torch.utils.data import DataLoader
 
 
 class SmsSpamTrainer:
+
+    training_data: DataLoader
+    validation_data: DataLoader
+    test_data: DataLoader
 
     def __init__(self):
         self.train_fraction = 0.7       # 70% data is for training
@@ -38,8 +38,7 @@ class SmsSpamTrainer:
         return result
 
     def prepare_data(self):
-        self.download_data()
-        tsv_path = resource_directory / 'SMSSpamCollection.tsv'
+        tsv_path = download_sms_spam_data()
         data_frame = pandas.read_csv(tsv_path, sep='\t', header=None, names=['Label', 'Text'])
         data_frame = self.balance_dataset(data_frame)
         data_frame = data_frame.sample(frac=1).reset_index(drop=True)       # shuffle the entire DataFrame
@@ -59,35 +58,9 @@ class SmsSpamTrainer:
         self.validation_data = create_dataloader(resource_directory / 'sms-spam-validation.csv')
         self.test_data = create_dataloader(resource_directory / 'sms-spam-test.csv')
 
-    def download_data(self):
-        data_file_path = Path(resource_directory) / 'SMSSpamCollection.tsv'
-
-        if data_file_path.exists():
-            return
-
-        url = 'https://archive.ics.uci.edu/static/public/228/sms+spam+collection.zip'
-
-        if not resource_directory.exists():
-            resource_directory.mkdir()
-
-        zip_path = Path(resource_directory) / 'sms_spam_collection.zip'
-
-        with request.urlopen(url) as response:
-            with open(zip_path, 'wb') as file:
-                file.write(response.read())
-
-        with ZipFile(zip_path, 'r') as zip:
-            zip.extractall(resource_directory)
-
-        # rename the unziped content
-        Path(resource_directory).joinpath('SMSSpamCollection').rename(data_file_path)
-
-        # clen up the unused files
-        Path(resource_directory).joinpath('sms_spam_collection.zip').unlink()
-        Path(resource_directory).joinpath('readme').unlink()
-
     def train_model(self, model: SpamClassifier, n_epochs: int = 5):
         optimizer = AdamW(model.parameters(), lr=5e-5, weight_decay=0.1)
+        loss_calculator = SpamLossCalculator(model)
         evaluator = SpamClassifierEvaluator(model)
 
         training_losses = []
@@ -104,7 +77,7 @@ class SmsSpamTrainer:
 
             for input_batch, target_batch in self.training_data:
                 optimizer.zero_grad()
-                loss = evaluator.batch_loss(input_batch, target_batch)
+                loss = loss_calculator.batch_loss(input_batch, target_batch)
                 loss.backward()
 
                 optimizer.step()
@@ -112,7 +85,8 @@ class SmsSpamTrainer:
                 global_step += 1
 
                 if global_step % eval_frequency == 0:
-                    train_loss, validation_loss = evaluator.model_loss(self.training_data, self.validation_data, eval_iter)
+                    model.eval()
+                    train_loss, validation_loss = loss_calculator.model_loss(self.training_data, self.validation_data, eval_iter)
                     model.train()
 
                     training_losses.append(train_loss)
@@ -122,6 +96,7 @@ class SmsSpamTrainer:
                           f'Training loss: {train_loss:.3f}' +
                           f'Validation loss: {validation_loss:.3f}')
 
+            model.eval()
             training_accuracy = evaluator.model_accuracy(self.training_data, n_batches=eval_iter)
             training_accuracies.append(training_accuracy)
             print(f'Training accuracy: {training_accuracy * 100:.2f}% | ', end='')
@@ -129,5 +104,6 @@ class SmsSpamTrainer:
             validation_accuracy = evaluator.model_accuracy(self.validation_data, n_batches=eval_iter)
             validation_accuracies.append(validation_accuracy)
             print(f'Validation accuracy: {validation_accuracy * 100:.2f}%')
+            model.train()
 
         model.eval()

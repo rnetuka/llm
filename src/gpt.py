@@ -41,10 +41,11 @@ class GptModel(nn.Module):
         self.config = config
         self.temperature = 1
         self.top_k = None
+        self.filename_suffix = ''
 
-    @classmethod
-    def pretrained(cls, config: GptConfig) -> GptModel:
-        model = cls(config)
+    @staticmethod
+    def pretrained(config: GptConfig) -> GptModel:
+        model = GptModel(config)
         model.temperature = 1.5
         model.top_k = 50
         model.to(device)
@@ -69,7 +70,9 @@ class GptModel(nn.Module):
 
     @property
     def filename(self) -> str:
-        return self.name.lower().replace('-', '', count=1).replace(' ', '-')
+        filename = self.name.lower().replace('-', '', count=1).replace(' ', '-')
+        filename += self.filename_suffix
+        return filename
 
     @property
     def number_of_parameters(self) -> int:

@@ -7,7 +7,7 @@ from .dataloader import create_dataloader
 from gpt import GptModel
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
-from training.loss import batch_loss, model_loss
+from training.loss import LossCalculator
 
 
 class InstructionTrainer:
@@ -54,6 +54,7 @@ class InstructionTrainer:
     def train(self, model: GptModel, n_epochs: int = 2):
         start_time = time.time()
         optimizer = AdamW(model.parameters(), weight_decay=0.1)
+        loss_calculator = LossCalculator()
 
         training_losses = []
         validation_losses = []
@@ -90,7 +91,7 @@ class InstructionTrainer:
 
                     track_lrs.append(lr)
 
-                loss = batch_loss(model, input_batch, target_batch)
+                loss = loss_calculator.batch_loss(input_batch, target_batch)
                 loss.backward()
 
                 if self.warmup and self.gradient_clipping:
@@ -102,7 +103,7 @@ class InstructionTrainer:
 
                 if global_step % eval_frequency == 0:
                     model.eval()
-                    training_loss, validation_loss = model_loss(model,
+                    training_loss, validation_loss = loss_calculator.model_loss(
                         self.training_data,
                         self.validation_data,
                         eval_iter

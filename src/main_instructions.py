@@ -7,7 +7,7 @@ from encoding import Tokenizer, Vocabulary
 from finetuning.instructions.format import AlpacaFormatter
 from finetuning.instructions.training import InstructionTrainer
 from gpt import GptModel
-from training.loss import data_loss
+from training.loss import LossCalculator
 
 
 tokenizer = Tokenizer()
@@ -60,8 +60,9 @@ if __name__ == '__main__':
     print()
 
     trainer = InstructionTrainer()
+    loss_calculator = LossCalculator(model)
 
-    print(f'Loss before fine-tuning: {data_loss(model, trainer.test_data):.3f}')
+    print(f'Loss before fine-tuning: {loss_calculator.data_loss(trainer.test_data):.3f}')
     print()
 
     test_model(model,
@@ -81,7 +82,7 @@ if __name__ == '__main__':
         model.save()
         print()
 
-    print(f'Validation loss after fine-tuning: {data_loss(model, trainer.test_data)}')
+    print(f'Validation loss after fine-tuning: {loss_calculator.data_loss(trainer.test_data)}')
     print()
 
     test_model(model,
