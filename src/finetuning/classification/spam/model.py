@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 
 from config import CONTEXT_LENGTH, GPT_2_SMALL, GptConfig
+from encoding import Tokenizer
 from gpt import GptModel
 from pathlib import Path
-from tokenizer import Tokenizer
 from torch import Tensor
 
 

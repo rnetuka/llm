@@ -1,4 +1,4 @@
-from src.vocabulary import Vocabulary
+from src.encoding.vocabulary import Vocabulary
 from typing import override
 from unittest import main as run_tests
 from unittest import TestCase

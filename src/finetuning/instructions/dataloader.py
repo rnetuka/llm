@@ -2,9 +2,8 @@ import torch
 
 from .data import Entry
 from .dataset import InstructionDataset
-from .evaluation import PAD_TOKEN
-from config import CONTEXT_LENGTH
-from tokenizer import Tokenizer
+from config import CONTEXT_LENGTH, PAD_TOKEN
+from encoding import Tokenizer
 from torch import Tensor
 from torch.utils.data import DataLoader
 from typing import Iterable

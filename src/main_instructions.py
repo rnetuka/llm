@@ -1,14 +1,13 @@
 # Fine-tuned GPT-2 model for processing instructions
 import types
 
-from config import GPT_2_MEDIUM, GPT_2_SMALL
+from config import GPT_2_SMALL
 from copy import copy
+from encoding import Tokenizer, Vocabulary
 from finetuning.instructions.format import AlpacaFormatter
 from finetuning.instructions.training import InstructionTrainer
 from gpt import GptModel
-from tokenizer import Tokenizer
 from training.loss import data_loss
-from vocabulary import Vocabulary
 
 
 tokenizer = Tokenizer()

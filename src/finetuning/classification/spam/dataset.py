@@ -2,10 +2,10 @@ import pandas
 import torch
 
 from config import CONTEXT_LENGTH
+from encoding import Tokenizer
 from os import PathLike
 from pandas import DataFrame
 from pandas.io.parsers import TextFileReader
-from tokenizer import Tokenizer
 from torch import Tensor
 from torch.utils.data import Dataset
 from typing import override

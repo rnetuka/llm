@@ -1,10 +1,9 @@
 from config import device, GPT_2_SMALL
+from encoding import Tokenizer, Vocabulary
 from gpt import GptModel
 from pretraining import openai
-from tokenizer import Tokenizer
 from training.dataloader import create_dataloader
 from training.loss import data_loss
-from vocabulary import Vocabulary
 
 
 if __name__ == '__main__':

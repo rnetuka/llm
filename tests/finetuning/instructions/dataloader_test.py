@@ -1,9 +1,8 @@
 import torch
 
-from config import CONTEXT_LENGTH
+from config import CONTEXT_LENGTH, PAD_TOKEN
+from encoding.tokenizer import Tokenizer
 from src.finetuning.instructions.dataloader import collate
-from src.finetuning.instructions.evaluation import PAD_TOKEN
-from tokenizer import Tokenizer
 from unittest import main as run_tests
 from util.pytorch_test import PyTorchTest
 

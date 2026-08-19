@@ -1,7 +1,7 @@
 import torch
 
 from config import CONTEXT_LENGTH
-from tokenizer import Tokenizer
+from encoding import Tokenizer
 from torch import Tensor
 from torch.utils.data import Dataset
 

@@ -1,8 +1,8 @@
 import tiktoken
 import torch
 
+from .vocabulary import Vocabulary
 from torch import Tensor
-from vocabulary import Vocabulary
 
 
 class Tokenizer:

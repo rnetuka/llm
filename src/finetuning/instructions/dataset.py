@@ -1,6 +1,6 @@
 from .data import Entry
 from .format import AlpacaFormatter
-from tokenizer import Tokenizer
+from encoding import Tokenizer
 from torch.utils.data import Dataset
 from typing import override
 

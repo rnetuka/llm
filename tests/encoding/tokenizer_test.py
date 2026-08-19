@@ -1,4 +1,4 @@
-from tokenizer import Tokenizer
+from src.encoding.tokenizer import Tokenizer
 from typing import override
 from unittest import main as run_tests
 from unittest import TestCase
