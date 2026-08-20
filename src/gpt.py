@@ -70,7 +70,7 @@ class GptModel(nn.Module):
 
     @property
     def filename(self) -> str:
-        filename = self.name.lower().replace('-', '', count=1).replace(' ', '-')
+        filename = self.name.lower().replace('-', '', 1).replace(' ', '-')
         filename += self.filename_suffix
         return filename
 
