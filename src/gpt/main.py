@@ -1,9 +1,9 @@
 from config import device, GPT_2_SMALL
-from encoding import Tokenizer, Vocabulary
+from gpt.encoding import Tokenizer, Vocabulary
 from gpt import GptModel
 from pretraining import openai
-from training.dataloader import create_dataloader
-from training.loss import LossCalculator
+from gpt.training.dataloader import create_dataloader
+from gpt.training.loss import LossCalculator
 
 
 if __name__ == '__main__':
@@ -21,7 +21,7 @@ if __name__ == '__main__':
     print(f'Model size: {model.model_size}')
     print()
 
-    test_data = create_dataloader('../resources/texts/the-verdict.txt')
+    test_data = create_dataloader('../../resources/texts/the-verdict.txt')
     loss_calculator = LossCalculator(model)
 
     print(f'Vanilla model loss: {loss_calculator.data_loss(test_data):.3f}')

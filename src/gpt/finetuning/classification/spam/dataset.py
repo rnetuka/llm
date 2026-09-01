@@ -1,8 +1,8 @@
 import pandas
 import torch
 
-from config import CONTEXT_LENGTH
-from encoding import Tokenizer
+from gpt.config import CONTEXT_LENGTH
+from gpt.encoding import Tokenizer
 from os import PathLike
 from pandas import DataFrame
 from pandas.io.parsers import TextFileReader

@@ -3,11 +3,11 @@ import types
 
 from config import GPT_2_MEDIUM
 from copy import copy
-from encoding import Tokenizer, Vocabulary
-from finetuning.instructions.format import AlpacaFormatter
-from finetuning.instructions.training import InstructionTrainer
-from gpt import GptModel
-from training.loss import LossCalculator
+from gpt.encoding import Tokenizer, Vocabulary
+from gpt.finetuning.instructions.format import AlpacaFormatter
+from gpt.finetuning.instructions.training import InstructionTrainer
+from gpt.model import GptModel
+from gpt.training.loss import LossCalculator
 
 
 tokenizer = Tokenizer()
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
     model = GptModel.pretrained(config)
     model.process = types.MethodType(process, model)
-    config.model_size += '-instructions'
+    model.filename += '-instructions'
 
     print(f'{model.name}, fine-tuned for processing instructions')
     print(f'Number of parameters: {model.number_of_parameters:_}'.replace('_', ' '))
@@ -65,12 +65,12 @@ if __name__ == '__main__':
     print(f'Loss before fine-tuning: {loss_calculator.data_loss(trainer.test_data):.3f}')
     print()
 
-    test_model(model,
-        test_suffix='(before fine-tuning)',
-        instruction='Convert the active sentence to passive',
-        input='"The chef cooks meal every day".',
-        correct_response='The meal is cooked by the chef every day.'
-    )
+    # test_model(model,
+    #     test_suffix='(before fine-tuning)',
+    #     instruction='Convert the active sentence to passive',
+    #     input='"The chef cooks meal every day".',
+    #     correct_response='The meal is cooked by the chef every day.'
+    # )
 
     if model.state_file.exists():
         print('Model loaded from state file')

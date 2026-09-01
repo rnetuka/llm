@@ -1,7 +1,7 @@
 import textwrap
 from typing import override
 
-from src.finetuning.instructions.format import AlpacaFormatter
+from gpt.finetuning.instructions.format import AlpacaFormatter
 from unittest import main as run_tests
 from unittest import TestCase
 

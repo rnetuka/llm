@@ -1,4 +1,4 @@
-from config import GPT_2_SMALL
+from gpt.config import GPT_2_SMALL
 from gpt import GptModel
 from pathlib import Path
 from typing import override

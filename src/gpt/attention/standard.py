@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from config import GptConfig
+from gpt.config import GptConfig
 from torch import  Tensor
 
 

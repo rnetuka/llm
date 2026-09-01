@@ -1,7 +1,7 @@
 import torch.nn as nn
 
-from activation import GELU
-from attention import MultiHeadAttention
+from gpt.activation import GELU
+from gpt.attention import MultiHeadAttention
 from config import GptConfig
 from normalization import LayerNormalization
 from torch import Tensor

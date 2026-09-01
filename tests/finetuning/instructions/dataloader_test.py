@@ -1,8 +1,8 @@
 import torch
 
-from config import CONTEXT_LENGTH, PAD_TOKEN
-from encoding.tokenizer import Tokenizer
-from src.finetuning.instructions.dataloader import collate
+from gpt.config import CONTEXT_LENGTH, PAD_TOKEN
+from gpt.encoding import Tokenizer
+from gpt.finetuning.instructions.dataloader import collate
 from unittest import main as run_tests
 from util.pytorch_test import PyTorchTest
 
@@ -20,8 +20,8 @@ class InstructionDataloaderTest(PyTorchTest):
         inputs, _ = collate(batch)
         expected = torch.tensor(
             [[0, 1, 2, 3, 4],
-             [5, 6, eof, pad, pad],
-             [7, 8, 9, eof, pad]]
+             [5, 6, eof, eof, eof],
+             [7, 8, 9, eof, eof]]
         )
         self.assertTensorsEqual(inputs, expected)
 

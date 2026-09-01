@@ -1,7 +1,7 @@
 import torch
 
-from config import CONTEXT_LENGTH
-from encoding import Tokenizer
+from gpt.config import CONTEXT_LENGTH
+from gpt.encoding import Tokenizer
 from torch import Tensor
 from torch.utils.data import Dataset
 

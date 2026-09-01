@@ -1,7 +1,7 @@
 import torch
 
-from config import device
-from finetuning.classification.spam.model import SpamClassifier
+from gpt.config import device
+from gpt.finetuning.classification.spam.model import SpamClassifier
 from torch.utils.data import DataLoader
 
 

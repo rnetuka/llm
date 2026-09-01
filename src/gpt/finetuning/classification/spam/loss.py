@@ -1,9 +1,9 @@
 import torch.nn as nn
 
 from .model import SpamClassifier
-from config import device
+from gpt.config import device
 from torch import Tensor
-from training.loss import LossCalculator
+from gpt.training.loss import LossCalculator
 from typing import override
 
 

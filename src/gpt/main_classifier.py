@@ -1,7 +1,7 @@
 from config import GPT_2_SMALL
-from finetuning.classification.spam.evaluation import SpamClassifierEvaluator
-from finetuning.classification.spam.model import SpamClassifier
-from finetuning.classification.spam.training import SmsSpamTrainer
+from gpt.finetuning.classification.spam.evaluation import SpamClassifierEvaluator
+from gpt.finetuning.classification.spam.model import SpamClassifier
+from gpt.finetuning.classification.spam.training import SmsSpamTrainer
 
 
 if __name__ == '__main__':

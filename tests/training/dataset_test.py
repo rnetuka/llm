@@ -1,4 +1,4 @@
-from src.training.dataset import TrainingDataset
+from gpt.training import TrainingDataset
 from unittest import main as run_tests
 from unittest import TestCase
 

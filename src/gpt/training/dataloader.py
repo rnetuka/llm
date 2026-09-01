@@ -1,6 +1,6 @@
 from os import PathLike
 from torch.utils.data import DataLoader
-from training.dataset import TrainingDataset
+from gpt.training.dataset import TrainingDataset
 
 
 def create_dataloader(path: str | PathLike[str], batch_size: int = 2) -> DataLoader:

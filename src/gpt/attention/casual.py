@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from config import CONTEXT_LENGTH, GptConfig
+from gpt.config import CONTEXT_LENGTH, GptConfig
 from torch import Tensor
 
 
@@ -9,17 +9,11 @@ class CasualAttention(nn.Module):
 
     def __init__(self, config: GptConfig):
         super().__init__()
-
-        d_in = config.embedding_dimensions
-        d_out = config.embedding_dimensions
-        drop_rate = config.drop_rate
-        qkv_bias = config.qkv_bias
-
-        self.d_out = d_out
-        self.W_query = nn.Linear(d_in, d_out, qkv_bias)
-        self.W_key = nn.Linear(d_in, d_out, qkv_bias)
-        self.W_value = nn.Linear(d_in, d_out, qkv_bias)
-        self.dropout = nn.Dropout(drop_rate)
+        dim = config.embedding_dimensions
+        self.W_query = nn.Linear(dim, dim)
+        self.W_key = nn.Linear(dim, dim)
+        self.W_value = nn.Linear(dim, dim)
+        self.dropout = nn.Dropout(config.drop_rate)
         self.register_buffer('mask', torch.triu(torch.ones(CONTEXT_LENGTH, CONTEXT_LENGTH), diagonal=1))
 
     def forward(self, x: Tensor) -> Tensor:

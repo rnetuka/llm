@@ -4,10 +4,10 @@ import torch.nn as nn
 
 from .data import Entry, read_data
 from .dataloader import create_dataloader
-from gpt import GptModel
+from gpt.model import GptModel
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
-from training.loss import LossCalculator
+from gpt.training.loss import LossCalculator
 
 
 class InstructionTrainer:
@@ -38,18 +38,18 @@ class InstructionTrainer:
     @property
     def training_data(self) -> DataLoader:
         i = self.training_portion
-        return create_dataloader(self.data[:i], batch_size=1, shuffle=True, drop_last=True)
+        return create_dataloader(self.data[:i], shuffle=True, drop_last=True)
 
     @property
     def test_data(self) -> DataLoader:
         i = self.training_portion
         j = self.training_portion + self.test_portion
-        return create_dataloader(self.data[i:j], batch_size=1, shuffle=False, drop_last=False)
+        return create_dataloader(self.data[i:j], shuffle=False, drop_last=False)
 
     @property
     def validation_data(self) -> DataLoader:
         j = self.training_portion + self.test_portion
-        return create_dataloader(self.data[j:], batch_size=1, shuffle=False, drop_last=False)
+        return create_dataloader(self.data[j:], shuffle=False, drop_last=False)
 
     def train(self, model: GptModel, n_epochs: int = 2):
         start_time = time.time()

@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from config import CONTEXT_LENGTH, device, GptConfig
-from encoding import Tokenizer
+from gpt.config import CONTEXT_LENGTH, device, GptConfig
+from gpt.encoding import Tokenizer
 from gpt import GptModel
 from pathlib import Path
 from torch import Tensor

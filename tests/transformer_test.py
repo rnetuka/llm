@@ -1,6 +1,6 @@
 import torch
 
-from src.transformer import TransformerBlock
+from gpt.transformer import TransformerBlock
 from unittest import main as run_tests
 from unittest import TestCase
 

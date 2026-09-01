@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 
-from config import device, PAD_TOKEN
-from gpt import GptModel
+from gpt.config import device, PAD_TOKEN
+from gpt.model import GptModel
 from torch import Tensor
 from torch.utils.data import DataLoader
 
