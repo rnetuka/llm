@@ -3,6 +3,7 @@ import types
 
 from config import GPT_2_MEDIUM
 from copy import copy
+
 from gpt.encoding import Tokenizer, Vocabulary
 from gpt.finetuning.instructions.format import AlpacaFormatter
 from gpt.finetuning.instructions.training import InstructionTrainer
@@ -62,7 +63,7 @@ if __name__ == '__main__':
     trainer = InstructionTrainer()
     loss_calculator = LossCalculator(model)
 
-    print(f'Loss before fine-tuning: {loss_calculator.data_loss(trainer.test_data):.3f}')
+    print(f'Loss before fine-tuning: {loss_calculator.data_loss(trainer.test_data, n_batches=1):.3f}')
     print()
 
     # test_model(model,
@@ -82,7 +83,7 @@ if __name__ == '__main__':
         model.save()
         print()
 
-    print(f'Validation loss after fine-tuning: {loss_calculator.data_loss(trainer.test_data)}')
+    print(f'Validation loss after fine-tuning: {loss_calculator.data_loss(trainer.test_data, n_batches=1)}')
     print()
 
     test_model(model,

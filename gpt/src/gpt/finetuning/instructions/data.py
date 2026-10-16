@@ -1,11 +1,9 @@
 import json
 
+from gpt.config import resource_directory
 from pathlib import Path
 from typing import TypedDict, NotRequired
 from urllib import request
-
-
-resource_directory = Path('..') / 'resources' / 'finetuning'
 
 
 class EntryDict(TypedDict):
@@ -48,7 +46,7 @@ def download_data(url: str):
 
 
 def read_data() -> list[Entry]:
-    path = resource_directory / 'instruction-data.json'
+    path = resource_directory / 'finetuning' / 'alpaca_data.json'
 
     if not path.exists():
         download_data('https://raw.githubusercontent.com/rasbt/LLMs-from-scratch/main/ch07/01_main-chapter-code/instruction-data.json')

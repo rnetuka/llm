@@ -4,6 +4,7 @@ import torch.nn as nn
 
 from .data import Entry, read_data
 from .dataloader import create_dataloader
+from gpt.config import device
 from gpt.model import GptModel
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
@@ -76,6 +77,9 @@ class InstructionTrainer:
             model.train()
 
             for input_batch, target_batch in self.training_data:
+                input_batch.to(device)
+                target_batch.to(device)
+
                 optimizer.zero_grad()
                 global_step += 1
 

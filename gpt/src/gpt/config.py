@@ -23,7 +23,8 @@ class GptConfig:
     drop_rate: float
     qkv_bias: bool
 
-    def __init__(self, model_name: str, model_size: str, embedding_dimensions: int, attention_heads: int, n_layers: int):
+    def __init__(self, model_id: str, model_name: str, model_size: str, embedding_dimensions: int, attention_heads: int, n_layers: int):
+        self.model_id = model_id
         self.model_name = model_name
         self.model_size = model_size
         self.vocabulary_size = VOCABULARY_SIZE
@@ -36,6 +37,7 @@ class GptConfig:
 
 
 GPT_2_SMALL = GptConfig(
+    model_id='gpt2-small',
     model_name='GPT-2 Small',
     model_size=MODEL_SIZE_SMALL,
     embedding_dimensions = 768,
@@ -44,6 +46,7 @@ GPT_2_SMALL = GptConfig(
 )
 
 GPT_2_MEDIUM = GptConfig(
+    model_id='gpt2-medium',
     model_name='GPT-2 Medium',
     model_size=MODEL_SIZE_MEDIUM,
     embedding_dimensions=1024,
@@ -52,6 +55,7 @@ GPT_2_MEDIUM = GptConfig(
 )
 
 GPT_2_LARGE = GptConfig(
+    model_id='gpt2-large',
     model_name='GPT-2 Large',
     model_size=MODEL_SIZE_LARGE,
     embedding_dimensions=1280,
@@ -60,6 +64,7 @@ GPT_2_LARGE = GptConfig(
 )
 
 GPT_2_XL = GptConfig(
+    model_id='gpt2-xl',
     model_name='GPT-2 XL',
     model_size=MODEL_SIZE_XL,
     embedding_dimensions=1600,

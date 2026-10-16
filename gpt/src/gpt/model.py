@@ -3,6 +3,7 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
+from . import resource_directory
 from config import device, CONTEXT_LENGTH, GptConfig, VOCABULARY_SIZE
 from normalization import LayerNormalization
 from pathlib import Path
@@ -13,8 +14,25 @@ from transformer import TransformerBlock
 
 class GptModel(nn.Module):
 
-    # token embedding layer transforming every word in the vocabulary into N dimensional vector
+    # Token embedding layer
+    # It transforms every word in the vocabulary into N dimensional vector
     tok_emb: nn.Embedding
+
+    # Position embedding layer
+    pos_emb: nn.Embedding
+
+    dropout: nn.Dropout
+
+    # A sequence of transformation blocks
+    trf_blocks: nn.Sequential
+
+    # Final layer normalization
+    final_norm: LayerNormalization
+
+    # Output layer
+    # It transforms computed values into vector of probabilities for each word in the vocabulary. The entry with the
+    # highest probability is the most likely word to follow, given the whole context
+    output_layer: nn.Linear
 
     # temperature parameter for token selection process
     # value > 0 (default is 1)
@@ -27,6 +45,10 @@ class GptModel(nn.Module):
     # top K parameter for token selection process
     # if provided, select top K probability values and choose only among them
     top_k: int | None
+
+    # filename (without file extension)
+    # Used as identifier or for saving/loading the trained model
+    filename: str
 
     def __init__(self, config: GptConfig):
         super().__init__()
@@ -80,7 +102,7 @@ class GptModel(nn.Module):
 
     @property
     def state_file(self) -> Path:
-        return Path('..') / 'resources' / f'{self.filename}.pth'
+        return resource_directory / f'{self.filename}.pth'
 
     def pick_top_k(self, logits: Tensor) -> Tensor:
         if self.top_k is not None:
@@ -111,8 +133,12 @@ class GptModel(nn.Module):
 
         return context.squeeze(0)
 
-    def save(self):
-        torch.save(self.state_dict(), self.state_file)
+    def save(self, path: Path | None = None):
+        if path is None:
+            path = self.state_file
+        torch.save(self.state_dict(), path)
 
-    def load(self):
-        self.load_state_dict(torch.load(self.state_file, map_location=device))
+    def load(self, path: Path | None = None):
+        if path is None:
+            path = self.state_file
+        self.load_state_dict(torch.load(path, map_location=device))

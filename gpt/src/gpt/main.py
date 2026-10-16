@@ -1,6 +1,6 @@
 from config import device, GPT_2_SMALL
 from gpt.encoding import Tokenizer, Vocabulary
-from gpt import GptModel
+from gpt.model import GptModel
 from pretraining import openai
 from gpt.training.dataloader import create_dataloader
 from gpt.training.loss import LossCalculator
@@ -21,16 +21,14 @@ if __name__ == '__main__':
     print(f'Model size: {model.model_size}')
     print()
 
-    test_data = create_dataloader('../../resources/texts/the-verdict.txt')
-    loss_calculator = LossCalculator(model)
-
-    print(f'Vanilla model loss: {loss_calculator.data_loss(test_data):.3f}')
-
     # Load OpenAI weights instead of training
     openai.pretrain(model)
 
+    test_data = create_dataloader('../resources/texts/the-verdict.txt')
+    loss_calculator = LossCalculator(model)
+
     # Model loss, calculated with test data. The closer to zero the better
-    print(f'Pretrained model loss: {loss_calculator.data_loss(test_data):.3f}')
+    print(f'Model loss: {loss_calculator.data_loss(test_data):.3f}')
     print()
 
     text = 'Every effort moves you'     # starting context for the model

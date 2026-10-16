@@ -1,4 +1,6 @@
 import json
+from pathlib import Path
+
 import numpy
 import os
 import requests
@@ -7,8 +9,9 @@ import torch.nn as nn
 
 from requests.exceptions import RequestException
 from tqdm import tqdm
-
+from gpt import resource_directory
 from gpt.config import MODEL_SIZE_SMALL, MODEL_SIZE_MEDIUM, MODEL_SIZE_LARGE, MODEL_SIZE_XL
+
 
 GPT_2_SMALL = '124M'
 GPT_2_MEDIUM = '355M'
@@ -16,51 +19,54 @@ GPT_2_LARGE = '774M'
 GPT_2_XL = '1558M'
 
 
-def model_directory(model_size: str):
-    return os.path.join('../../../resources/model-weights', model_size)
+def model_directory(model_size: str) -> Path:
+    return resource_directory / 'model-weights' / model_size
+
 
 def download_weights(model_size: str):
-    allowed_sizes = (GPT_2_SMALL, GPT_2_MEDIUM, GPT_2_LARGE, GPT_2_XL)
-    if model_size not in allowed_sizes:
+    if model_size not in [GPT_2_SMALL, GPT_2_MEDIUM, GPT_2_LARGE, GPT_2_XL]:
         raise ValueError(f'Invalid model size: {model_size}')
 
-    model_dir = model_directory(model_size)
-    base_url = 'https://openaipublic.blob.core.windows.net/gpt-2/models'
+    directory = model_directory(model_size)
+    directory.mkdir(parents=True, exist_ok=True)
+
     filenames = [
-        'checkpoint', 'encoder.json', 'hparams.json',
-        'model.ckpt.data-00000-of-00001', 'model.ckpt.index',
-        'model.ckpt.meta', 'vocab.bpe'
+        'checkpoint',
+        'encoder.json',
+        'hparams.json',
+        'model.ckpt.data-00000-of-00001',
+        'model.ckpt.index',
+        'model.ckpt.meta',
+        'vocab.bpe'
     ]
-
-    os.makedirs(model_dir, exist_ok=True)
     for filename in filenames:
-        file_url = os.path.join(base_url, model_size, filename)
-        file_path = os.path.join(model_dir, filename)
-        download_file(file_url, file_path)
+        download_file(
+            url='https://openaipublic.blob.core.windows.net/gpt-2/models/' + model_size + '/' + filename,
+            destination=directory / filename
+        )
 
 
-def download_file(url: str, destination: str):
+def download_file(url: str, destination: Path):
     try:
         response = requests.get(url, stream=True, timeout=60)
         response.raise_for_status()
 
         file_size = int(response.headers.get('Content-Length', 0))
 
-        if os.path.exists(destination):
+        if destination.exists():
             local_file_size = os.path.getsize(destination)
             if file_size == local_file_size:
                 print(f'File already exists and is up-to-date: {destination}')
-                return True
+                return
 
-        block_size = 1024
         desc = os.path.basename(url)
         with tqdm(total=file_size, unit='iB', unit_scale=True, desc=desc) as progress_bar:
             with open(destination, 'wb') as file:
-                for chunk in response.iter_content(chunk_size=block_size):
+                for chunk in response.iter_content(chunk_size=1024):
                     if chunk:
                         file.write(chunk)
                         progress_bar.update(len(chunk))
-        return True
+
     except RequestException as ex:
         print(f'Error while downloading from {url}: {ex}')
 
@@ -188,7 +194,9 @@ def pretrain(model: nn.Module):
         }
         model_size = model_mapping[model.config.model_size]
 
-        if not os.path.exists(f'../resources/model-weights/{model_size}'):
+        model_dir = model_directory(model_size)
+
+        if not os.path.exists(model_dir):
             download_weights(model_size)
 
         settings, params = load_weights(model_size)

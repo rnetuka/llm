@@ -1,7 +1,7 @@
 # pyproject.toml
 
 [project]
-name = "My-GPT"
+name = "GPT"
 version = "0.1.0"
 dependencies = [
     "torch>=2.0.0",

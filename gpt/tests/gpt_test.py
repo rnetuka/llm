@@ -24,7 +24,7 @@ class Gpt2SmallTest(TestCase):
 
     def test_state_file(self):
         path = self.model.state_file.resolve()
-        expected = (Path('..') / 'resources' / 'gpt2-small.pth').resolve()
+        expected = (Path('../..') / 'resources' / 'gpt2-small.pth').resolve()
         self.assertEqual(expected, path)
 
 
