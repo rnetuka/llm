@@ -8,14 +8,14 @@ class RMSNorm(nn.Module):
         super().__init__()
         self.eps = 1e-6
         self.bias = False
-        self.qwen3_complatible=True
+        self.qwen3_compatible=True
         self.scale = nn.Parameter(torch.ones(embedding_dimension))
         self.shift = nn.Parameter(torch.zeros(embedding_dimension)) if self.bias else None
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         input_dtype = x.dtype
 
-        if self.qwen3_complatible:
+        if self.qwen3_compatible:
             x = x.to(torch.float32)
 
         variance = x.pow(2).mean(dim=-1, keepdim=True)

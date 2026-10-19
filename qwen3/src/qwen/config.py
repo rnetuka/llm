@@ -43,3 +43,27 @@ class QwenConfig:
         self.number_of_kv_groups = 8
         self.rope_base = 1_000_000.
         self.dtype = torch.bfloat16
+
+
+def get_device(enable_tensor_cores: bool = True):
+    if torch.cuda.is_available():
+        device = torch.device('cuda')
+        print('Using NVIDIA CUDA GPU')
+
+        if enable_tensor_cores:
+            major, minor = map(int, torch.__version__.split('.')[:2])
+            if (major, minor) >= (2, 9):
+                torch.backends.cuda.matmul.fp32_precision = 'tf32'
+                torch.backends.cudnn.conv.fp32_precision = 'fp32'
+            else:
+                torch.backends.cuda.matmul.allow_tf32 = True
+                torch.backends.cudnn.allow_tf32 = True
+
+    elif torch.xpu.is_available():
+        device = torch.device('xpu')
+        print('Using Intel GPU')
+
+    else:
+        device = torch.device('cpu')
+
+    return device

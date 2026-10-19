@@ -1,4 +1,5 @@
 import re
+import torch
 
 from os import PathLike
 from pathlib import Path
@@ -6,6 +7,7 @@ from pathlib import Path
 from tokenizers import Tokenizer
 
 from qwen import resources
+from qwen.config import get_device
 from qwen.resources import resources
 
 
@@ -77,7 +79,11 @@ class QwenTokenizer:
 
         return ids
 
-    def decode(self, token_ids: list[int]):
+    def tokenize(self, prompt: str) -> torch.Tensor:
+        token_ids = self.encode(prompt)
+        return torch.tensor(token_ids, device=get_device()).unsqueeze(0)
+
+    def decode(self, token_ids: list[int]) -> str:
         return self._tok.decode(token_ids, skip_special_tokens=False)
 
     def _wrap_chat(self, user_message: str):

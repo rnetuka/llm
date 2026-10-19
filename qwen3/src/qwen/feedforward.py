@@ -26,10 +26,14 @@ class GLUFeedForward(nn.Module):
             dtype=config.dtype,
             bias=False
         )
-        self.activation = nn.functional.silu
+        #self.activation = nn.functional.silu
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        y1 = self.layer1(x)
-        y1 = self.activation(y1)
-        y2 = self.layer2(x)
-        return self.layer3(y1 * y2)
+        #y1 = self.layer1(x)
+        #y1 = self.activation(y1)
+        #y2 = self.layer2(x)
+        #return self.layer3(y1 * y2)
+        x_fc1 = self.layer1(x)
+        x_fc2 = self.layer2(x)
+        x = nn.functional.silu(x_fc1) * x_fc2
+        return self.layer3(x)

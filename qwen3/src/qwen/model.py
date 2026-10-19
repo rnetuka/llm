@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+from qwen.cache import KVCache
 from qwen.config import QwenConfig
 from qwen.normalization import RMSNorm
 from qwen.resources import resources
@@ -36,6 +37,7 @@ class Qwen3(nn.Module):
         self.register_buffer('cos', cos, persistent=False)
         self.register_buffer('sin', sin, persistent=False)
         self.config = config
+        self.kv_cache = KVCache(config.number_of_layers)
         self.current_position = 0   # track current position in KV cache
 
     @staticmethod
@@ -81,17 +83,19 @@ class Qwen3(nn.Module):
         return model
 
 
-    def forward(self, in_idx: torch.Tensor, cache=None) -> torch.Tensor:
+    def forward(self, in_idx: torch.Tensor) -> torch.Tensor:
         token_embedding = self.token_embedding(in_idx)
         x = token_embedding
 
         num_tokens = x.shape[1]
+        cache = self.kv_cache
         if cache is not None:
             pos_start = self.current_position
             pos_end = pos_start + num_tokens
             self.current_position = pos_end
             mask = torch.triu(torch.ones(pos_end, pos_end, device=x.device, dtype=torch.bool), diagonal=1)[pos_start:pos_end, :pos_end]
         else:
+            pos_start = 0
             mask = torch.triu(torch.ones(num_tokens, num_tokens, device=x.device, dtype=torch.bool), diagonal=1)
 
         # Prefill (no cache): mask starts as (num_tokens, num_tokens)
@@ -117,4 +121,20 @@ class Qwen3(nn.Module):
         return logits
 
     def reset_kv_cache(self):
+        self.kv_cache = KVCache(self.config.number_of_layers)
         self.current_position = 0
+
+    @torch.inference_mode()
+    def generate_text_basic_stream(self, tokens: torch.Tensor, max_new_tokens: int, eos_token_id: int) -> torch.Tensor:
+        self.eval()
+        self.reset_kv_cache()
+        out = self(tokens)[:, -1]
+        for _ in range(max_new_tokens):
+            next_token = torch.argmax(out, dim=-1, keepdim=True)
+
+            if torch.all(next_token == eos_token_id):
+                break
+
+            yield next_token
+            out = self(next_token)[:, -1]
+            #tokens = torch.cat([tokens, next_token], dim=1)

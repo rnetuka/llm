@@ -23,12 +23,13 @@ class TransformerBlock(nn.Module):
         self.norm1 = RMSNorm(config.embedding_dimension)
         self.norm2 = RMSNorm(config.embedding_dimension)
 
-    def forward(self, x: torch.Tensor, mask, cos, sin, start_pos: int = 0, cache=None) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, mask, cos, sin, start_position: int = 0, cache=None) -> torch.Tensor:
         shortcut = x
         x = self.norm1(x)
-        x, next_cache = self.attention(x, mask, cos, sin, start_pos=start_pos, cache=cache)
+        x, next_cache = self.attention(x, mask, cos, sin, start_pos=start_position, cache=cache)
         x = x + shortcut
         shortcut = x
         x = self.norm2(x)
+        x = self.ff(x)
         x = x + shortcut
         return x, next_cache
