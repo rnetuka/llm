@@ -16,7 +16,7 @@ def generate_stats(generated_tokens: torch.Tensor, start_time: float, end_time: 
 if __name__ == '__main__':
     device = get_device()
 
-    #download_qwen3_small(kind='reasoning', tokenizer_only=True, out_dir='../../resources')
+    #download_qwen3_small(kind='reasoning', tokenizer_only=False, out_dir='../../resources')
 
     tokenizer = QwenTokenizer.base()
     model = Qwen3.pretrained()

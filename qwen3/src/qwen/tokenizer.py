@@ -78,11 +78,11 @@ class QwenTokenizer:
             prompt = self._wrap_chat(prompt)
 
         ids = []
-        for sequence in [part for part in self.SPLIT_REGEX.split(prompt) if part]:
-            if sequence in self.special_tokens:
-                ids.append(self.special_tokens[sequence])
-            else:
-                ids += self.impl.encode(sequence).ids
+        for part in self.SPLIT_REGEX.split(prompt):
+            if part in self.special_tokens:
+                ids.append(self.special_tokens[part])
+            elif part:
+                ids += self.impl.encode(part).ids
 
         return ids
 
