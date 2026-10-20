@@ -1,19 +1,18 @@
+from __future__ import annotations
+
 import re
 import torch
 
-from os import PathLike
 from pathlib import Path
-
-from tokenizers import Tokenizer
-
 from qwen import resources
 from qwen.config import get_device
 from qwen.resources import resources
+from tokenizers import Tokenizer
 
 
 class QwenTokenizer:
 
-    _SPECIALS = [
+    SPECIALS = [
         '<|endoftext|>',
         '<|im_start|>',
         '<|im_end|>',
@@ -30,52 +29,60 @@ class QwenTokenizer:
         '<|video_pad|>'
     ]
 
-    _SPLIT_RE = re.compile(r'(<\|[^>]+?\|>)')
+    SPLIT_REGEX = re.compile(r'(<\|[^>]+?\|>)')
 
 
-    def __init__(self, path: PathLike, apply_chat_template: bool = False, add_generation_prompt: bool = False, add_thinking: bool = False):
+    def __init__(self, path: Path, apply_chat_template: bool = False, add_generation_prompt: bool = False, add_thinking: bool = False):
+        if not path.exists():
+            raise FileNotFoundError(f'Tokenizer file ${path} does not exist')
+
         self.apply_chat_template = apply_chat_template
         self.add_generation_prompt = add_generation_prompt
         self.add_thinking = add_thinking
 
-        tok_path = Path(path)
-        if not tok_path.exists():
-            raise FileNotFoundError(f'Tokenizer file ${tok_path} does not exist')
+        self.impl = Tokenizer.from_file(str(path))
+        self.special_tokens = {token: self.impl.token_to_id(token) for token in self.SPECIALS}
 
-        self._tok = Tokenizer.from_file(str(tok_path))
-        self._special_to_id = {t: self._tok.token_to_id(t) for t in self._SPECIALS}
         self.pad_token = '<|endoftext|>'
-        self.pad_token_id = self._special_to_id.get(self.pad_token)
-
-        f = tok_path.name.lower()
-        if 'base' in f and 'reasoning' not in f:
-            self.eos_token = '<|endoftext|>'
-        else:
-            self.eos_token = '<|im_end|>'
-        self.eos_token_id = self._special_to_id.get(self.eos_token)
+        self.eos_token = '<|im_end|>' if 'reasoning' in path.name.lower() else '<|endoftext|>'
 
     @staticmethod
-    def base():
-        path = resources / 'tokenizer-base.json'
-        return QwenTokenizer(path)
+    def base() -> QwenTokenizer:
+        return QwenTokenizer(resources / 'tokenizer-base.json')
 
-    def encode(self, prompt: str, chat_wrapped=None):
-        if chat_wrapped is None:
-            chat_wrapped = self.apply_chat_template
+    @staticmethod
+    def reasoning() -> QwenTokenizer:
+        return QwenTokenizer(
+            resources / 'tokenizer-reasoning.json',
+            apply_chat_template=True,
+            add_generation_prompt=True,
+            add_thinking=True
+        )
 
-        stripped = prompt.strip()
-        if stripped in self._special_to_id and '\n' not in stripped:
-            return [self._special_to_id[stripped]]
+    @property
+    def pad_token_id(self) -> int:
+        return self.special_tokens[self.pad_token]
 
-        if chat_wrapped:
+    @property
+    def eos_token_id(self) -> int:
+        return self.special_tokens[self.eos_token]
+
+    def split(self, prompt: str) -> list[str]:
+        return [part for part in self.SPLIT_REGEX.split(prompt) if part]
+
+    def encode(self, prompt: str) -> list[int]:
+        if (stripped := prompt.strip()) in self.special_tokens and '\n' not in stripped:
+            return [self.special_tokens[stripped]]
+
+        if self.apply_chat_template:
             prompt = self._wrap_chat(prompt)
 
         ids = []
-        for part in filter(None, self._SPLIT_RE.split(prompt)):
-            if part in self._special_to_id:
-                ids.append(self._special_to_id[part])
+        for sequence in [part for part in self.SPLIT_REGEX.split(prompt) if part]:
+            if sequence in self.special_tokens:
+                ids.append(self.special_tokens[sequence])
             else:
-                ids.extend(self._tok.encode(part).ids)
+                ids += self.impl.encode(sequence).ids
 
         return ids
 
@@ -84,7 +91,7 @@ class QwenTokenizer:
         return torch.tensor(token_ids, device=get_device()).unsqueeze(0)
 
     def decode(self, token_ids: list[int]) -> str:
-        return self._tok.decode(token_ids, skip_special_tokens=False)
+        return self.impl.decode(token_ids, skip_special_tokens=False)
 
     def _wrap_chat(self, user_message: str):
         s = f'<|im_start|>user\n{user_message}\n<|im_end|>\n'

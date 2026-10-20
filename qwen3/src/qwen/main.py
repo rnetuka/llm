@@ -16,7 +16,7 @@ def generate_stats(generated_tokens: torch.Tensor, start_time: float, end_time: 
 if __name__ == '__main__':
     device = get_device()
 
-    #download_qwen3_small(kind='base', tokenizer_only=False, out_dir='qwen3')
+    #download_qwen3_small(kind='reasoning', tokenizer_only=True, out_dir='../../resources')
 
     tokenizer = QwenTokenizer.base()
     model = Qwen3.pretrained()
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     start_time = time.time()
     token_count = 0
 
-    for i, token in enumerate(model.generate_text_basic_stream(tokens, max_new_tokens=100, eos_token_id=151643)):
+    for i, token in enumerate(model.generate_text_basic_stream(tokens, max_new_tokens=100, eos_token_id=tokenizer.eos_token_id)):
         token_id = token.squeeze(0).tolist()
         token_str = tokenizer.decode(token_id)
         if i == 0:
